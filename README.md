@@ -1,2 +1,2 @@
 # python-workground
-A open python project resource of mine. 
+Some open python projects of mine. 
