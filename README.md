@@ -3,16 +3,16 @@ Some open python projects I test on.. ;-)
 
 
 ##  1. autocad_scripts [Aug 2020]
-    - A scripting language for autocad, I am trying to automate but not yet completed and stopped (Not that important for me).
+>  A scripting language for autocad, I am trying to automate but not yet completed and stopped (not that important for me).
 
 ##  2. blackjack [March 2019]
-    - The card game that every starter programmers do with simple python no external packages.
+> The card game that every starter programmers do with simple python no external packages.
 
 ##  3. costanalysis [July 2021]
-    - Uses tkinter, pandas, xlsxwritter for a friendly GUI to do some complex calculation and export the results to a formatted  Excel file.
+> Uses tkinter, pandas, xlsxwritter for a friendly GUI to do some complex calculation and export the results to a formatted  Excel file.
 
 ##  4. xoxo_game [March 2019]
-    - It is the game begginer level, hehe
+> It is the game begginer level, hehe.
 
 ___
 
