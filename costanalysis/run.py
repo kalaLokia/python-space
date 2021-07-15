@@ -1,12 +1,12 @@
-from runapp import ARTINFO_DB
+"""
+For easy test purpose console based access without tkinter UI
+"""
+
 import sys
 import pandas as pd
-from article import Article
-from bom import Bom
-from excel_report import ExcelReporting
-import math
-from net_margin import calculateNetMargin
-from datetime import datetime
+from core.article import Article
+from core.bom import Bom
+from core.excel_report import ExcelReporting
 
 # bom_source = "data/Bom Hierarchy final.xlsx"
 # items_source = "data/materials.xlsx"
@@ -28,43 +28,20 @@ except:
     print(e)
 
 
-try:
-    ARTICLE_INFO_DB = pd.read_csv(article_source)
-    ARTICLE_INFO_DB["article"] = ARTICLE_INFO_DB["article"].str.lower()
-except FileNotFoundError:
-    ARTICLE_INFO_DB = pd.DataFrame()
+# try:
+#     ARTICLE_INFO_DB = pd.read_csv(article_source)
+#     ARTICLE_INFO_DB["article"] = ARTICLE_INFO_DB["article"].str.lower()
+# except FileNotFoundError:
+#     ARTICLE_INFO_DB = pd.DataFrame()
 
-except:
-    e = sys.exc_info()[0]
-    print(e)
-
-
-# def openFile():
-#     global ARTLIST_DB
-
-#     filename = "C:/Users/nightfury/Workshop/data/articles.csv"
-
-#     try:
-#         ARTLIST_DB = pd.read_csv(filename)
-#     except:
-#         print("Couldn't read data! File missing or invalid.")
-
-#     if ARTLIST_DB.shape[1] != 4:
-#         ARTLIST_DB = None
-#         print("Correpted file. Accepts only 4 columns.")
-
-#     elif ARTLIST_DB[ARTLIST_DB.columns[0]].isnull().values.any():
-#         ARTLIST_DB = None
-#         print("Correpted file. Some article name is not provided in the data.")
-
-#     else:
-#         # ARTLIST_DB.replace({"0": math.nan, 0: math.nan}, inplace=True)
-#         print(f"Successfully fetched data from the given file.")
+# except:
+#     e = sys.exc_info()[0]
+#     print(e)
 
 
 if __name__ == "__main__":
 
-    article = Article(artno="DG9531", color="bk")
+    article = Article(artno="3290", color="br")
 
     bom = Bom(article=article)
     response = bom.createFinalBom(bom_db, items_db)

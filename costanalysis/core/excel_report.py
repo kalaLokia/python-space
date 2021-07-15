@@ -1,9 +1,16 @@
-import pandas as pd
+"""
+Excel reporting.
+
+Yep, I know it is little mess ;')
+"""
 from io import BytesIO
+import pandas as pd
+from .article import Article
+from core.settings import FIXED_RATES, SELLING_DISTRIBUTION, SALES_RETURN, ROYALTY
 
 
 class ExcelReporting:
-    def __init__(self, article, nl_df, co_df, pu_df, pm_df):
+    def __init__(self, article: Article, nl_df, co_df, pu_df, pm_df) -> None:
         self.article = article
         self.nl_df = nl_df
         self.co_df = co_df
@@ -166,7 +173,7 @@ class ExcelReporting:
         self.worksheet.write(2, 1, "Article", fmt_artinfo1)
         self.worksheet.write(3, 1, "Color", fmt_artinfo1)
         self.worksheet.write(4, 1, "Category", fmt_artinfo1)
-        self.worksheet.merge_range("D2:D3", "UNIT NAME", fmt_branch)
+        self.worksheet.merge_range("D2:D3", "SOME FANCY HEADING", fmt_branch)
         self.worksheet.write("D4", "COST SHEET", fmt_costsheet)
         self.worksheet.write(2, 5, "Size", fmt_textC)
         self.worksheet.write(3, 4, "PER PAIR", fmt_textC)
@@ -200,13 +207,9 @@ class ExcelReporting:
         self.worksheet.write(self.co_start_row, 1, "Component", fmt_textBC_grey)
         for c in range(2, 7):
             self.worksheet.write(self.co_start_row, c, None, fmt_textBC_grey)
-        self.worksheet.write(self.pu_start_row - 3, 3, "STITCHING CHARGES", fmt_textBR)
-        self.worksheet.write(
-            self.pu_start_row - 2, 3, "PRINTING & EMBOSSING", fmt_textBR
-        )
-        self.worksheet.write(
-            self.pu_start_row - 1, 3, "Cost of Footwear Upper", fmt_textBL
-        )
+        self.worksheet.write(self.pu_start_row - 3, 3, "S CHARGES", fmt_textBR)
+        self.worksheet.write(self.pu_start_row - 2, 3, "P CHARGES", fmt_textBR)
+        self.worksheet.write(self.pu_start_row - 1, 3, "Cost of Upper", fmt_textBL)
 
         self.worksheet.write(
             self.pu_start_row - 3, 6, self.article.stitch_rate, fmt_textR
@@ -218,7 +221,7 @@ class ExcelReporting:
         cost_upper = f"=SUM($G${self.nl_start_row + 2}:$G${self.pu_start_row - 1})"
         self.worksheet.write_formula(self.pu_start_row - 1, 6, cost_upper, fmt_textBR)
         # Material 3
-        self.worksheet.write(self.pu_start_row, 1, "Footwear Sole", fmt_textBC_grey)
+        self.worksheet.write(self.pu_start_row, 1, "Sole", fmt_textBC_grey)
         for c in range(2, 7):
             self.worksheet.write(self.pu_start_row, c, None, fmt_textBC_grey)
 
@@ -227,11 +230,8 @@ class ExcelReporting:
         self.worksheet.write(
             self.pm_start_row - 3, 3, "NORMAL WASTAGE @ 5%", fmt_textBR
         )
-        self.worksheet.write(
-            self.pm_start_row - 1, 3, "Cost of Footwear Sole", fmt_textBL
-        )
+        self.worksheet.write(self.pm_start_row - 1, 3, "Cost of Sole", fmt_textBL)
 
-        # TODO: Set dynamic value : footwear sole rate or formula
         cost_sole = f"=SUM($G${self.pu_start_row + 2}:$G${self.pm_start_row - 2})"
         self.worksheet.write(self.pm_start_row - 1, 6, cost_sole, fmt_textBR)
 
@@ -254,7 +254,6 @@ class ExcelReporting:
             self.worksheet.write(self.pm_end_row + 2, c, None, fmt_textBC_grey)
         # TOTAL COST OF MATERIALS
         self.worksheet.write(self.last_row, 3, "TOTAL COST OF MATERIALS", fmt_textBL)
-        # TODO: Set dynamic value for the total cost
         self.worksheet.write_formula(self.last_row, 6, total_cost_upper, fmt_textBR)
         self.row_total_cost = self.last_row + 1
         self.last_row += 2
@@ -263,23 +262,15 @@ class ExcelReporting:
         self.footer(fmt_textBL, fmt_textBC, fmt_textL, fmt_textR)
 
     def constRateDetails(self, fmt_L, fmt_R, fmt_B):
-        data = [
-            ["1-Wages & Benefits", 9.72],
-            ["2-Salaries & Emoluments", 0.79],
-            ["3-Other Factory Overheads", 1.73],
-            ["4-Admin Expenses", 1.37],
-            ["5-Interest & Bank Charges", 0.02],
-            ["6-Depreciation", 4.35],
-            ["7-Other Expenses", "-"],
-            ["8-Finance Costs", 1.06],
-        ]
         start = self.last_row + 1
-        for item in data:
-            self.worksheet.write(self.last_row, 3, item[0], fmt_L)
-            self.worksheet.write(self.last_row, 6, item[1], fmt_R)
+        for i, (key, value) in enumerate(FIXED_RATES.items()):
+            item = "{0}-{1}".format(
+                i, key.replace("_", " ").replace("and", "&").title()
+            )
+            self.worksheet.write(self.last_row, 3, item, fmt_L)
+            self.worksheet.write(self.last_row, 6, value, fmt_R)
             self.last_row += 1
         end = self.last_row
-        # TODO: Formula
         self.row_total_other_expense = self.last_row + 3
         self.worksheet.write_formula(
             self.row_total_other_expense - 1, 6, f"=SUM($G${start}:$G${end})", fmt_B
@@ -412,18 +403,18 @@ class ExcelReporting:
             ["", "", "", [fmt_L, fmt_L, fmt_L]],
             [
                 "Selling and Distribution",
-                "=16.75%",
+                SELLING_DISTRIBUTION,
                 sell_distr_F,
                 [fmt_L, fmt_percent, fmt_R],
             ],
-            ["Royalty", "=0.50%", royalty_F, [fmt_L, fmt_percent, fmt_R]],
+            ["Royalty", ROYALTY, royalty_F, [fmt_L, fmt_percent, fmt_R]],
             [
                 "Cost of Goods Sold",
                 "",
                 goods_sold_F,
                 [fmt_reddishL, fmt_reddishL, fmt_reddishR],
             ],
-            ["Sales Return", "=1%", sale_return_F, [fmt_L, fmt_percent, fmt_R]],
+            ["Sales Return", SALES_RETURN, sale_return_F, [fmt_L, fmt_percent, fmt_R]],
             ["TOTAL", "", total_F, [fmt_B, fmt_BC, fmt_R]],
             [
                 "NET MARGIN",
@@ -519,13 +510,15 @@ class ExcelReporting:
         try:
             with open(filename, "wb+") as f:
                 f.write(excel.getvalue())
-        except:
-            # print("Couldn't write! Please close the file if you have it opened.")
+        except PermissionError:
             return {
                 "status": "ERR",
-                "message": "I can't create the file. Please close the file if you're using it.",
+                "message": f"Permission denied. Close the file ({self.article.get_filename}) if it is already being used.",
             }
+        except Exception as e:
+            print(e)
+
         return {
             "status": "CREATED",
-            "message": f"Successfully created {self.article.article_code.upper()}.",
+            "message": f'Successfully exported costsheet for "{self.article.article_name}".',
         }

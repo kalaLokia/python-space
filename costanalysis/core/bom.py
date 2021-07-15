@@ -1,9 +1,14 @@
-import pandas as pd
+"""
+Getting actual BOM of an article.
+"""
+
 import math
+import pandas as pd
+from .article import Article
 
 
 class Bom:
-    def __init__(self, article):
+    def __init__(self, article: Article) -> None:
         self.bom_df = None
         self.article = article
 
@@ -48,7 +53,7 @@ class Bom:
         total_sum = math.ceil(total_sum * 100) / 100  # round up to 2 decimal places
         return total_sum
 
-    def createFinalBom(self, df, items_df):
+    def createFinalBom(self, df, items_df) -> dict:
         mc_name = self.article.get_mc_name
         mc_conditions = (df["Father"].str.lower() == mc_name) & (
             df["Process Order"] == 1
@@ -94,23 +99,19 @@ class Bom:
         )
 
         if self.bom_df.empty:
-            msg = "I didn't find {0} in the database.".format(
-                self.article.article_code.upper()
-            )
             return {
-                "status": "ERR",
-                "message": msg,
+                "status": "NOT FOUND",
+                "message": f'Bom for article "{self.article.article_name}" not found in the database. Update the database if it is too old.',
             }
 
         self.updateBom(items_df)
 
         return {
             "status": "OK",
-            "message": "Bom for the article loaded.",
+            "message": f"Fetched bom for {self.article.article_name}",
         }
 
-    # TODO: in corporate PUX bom in table
-    def updateBom(self, df):
+    def updateBom(self, df) -> None:
         unwanted_columns = [
             "Father Name",
             "Father No of pairs",
@@ -148,7 +149,7 @@ class Bom:
         self.bom_df["childrate"] = pd.to_numeric(
             self.bom_df["childrate"], errors="coerce"
         )
-        self.article.mrp = self.bom_df.mrp.iloc[0]
+        self.article.mrp = float(self.bom_df.mrp.iloc[0])
         self.article.pairs_in_case = int(self.get_pairs_in_mc)
         self.updateRexinConsumption()
         self.updateComponentConsumption()
@@ -168,14 +169,14 @@ class Bom:
         )
         return df[condition1 & condition2]["Child"].unique()
 
-    def changeColumnName(self, name):
+    def changeColumnName(self, name) -> str:
         return {
             "FOREIGN NAME": "childname",
             "INVENTORY UOM": "childuom",
             "Last Purchase Price": "childrate",
         }.get(name, name.lower().replace(" ", ""))
 
-    def getMaterialType(self, head: str, tail: str):
+    def getMaterialType(self, head: str, tail: str) -> str:
         item = tail[2:4].lower()
         head_item = "".join(head.split("-")[1:2]).lower()
 
@@ -199,7 +200,7 @@ class Bom:
         except:
             return "Unknown"
 
-    def updateRexinConsumption(self):
+    def updateRexinConsumption(self) -> None:
         slt_df = self.bom_df[
             (self.bom_df.processorder == 8)
             & (self.bom_df.childtype == "Synthetic Leather")
@@ -216,7 +217,7 @@ class Bom:
 
             self.bom_df.loc[slt_df.index.values[i], "childqty"] *= length
 
-    def updateComponentConsumption(self):
+    def updateComponentConsumption(self) -> None:
         fld_df = self.bom_df[
             (self.bom_df.processorder == 7)
             & (
@@ -231,12 +232,12 @@ class Bom:
                 length = fld_head_df["childqty"].iloc[0]
                 self.bom_df.loc[fld_df.index.values[i], "childqty"] *= length
 
-    def updatePuxConsumption(self):
+    def updatePuxConsumption(self) -> None:
         self.bom_df.loc[
             self.bom_df["father"] == self.get_outer_sole[0], "childqty"
         ] *= self.get_outer_sole[1]
 
-    def getApplication(self, head, process):
+    def getApplication(self, head, process) -> str:
         value = "".join(head.split("-")[1:2])
 
         if value.lower() == "fb":
@@ -249,21 +250,19 @@ class Bom:
         else:
             return value
 
-    def calculateRate(self, process, item_rate, qty):
+    def calculateRate(self, process, item_rate, qty) -> float:
         rate = item_rate * qty
         if process == 1:
             rate = rate / self.get_pairs_in_mc
         return rate
 
-    def getTableData(self, mtype: str):
+    def getTableData(self, mtype: str) -> pd.DataFrame:
         """
         Get costsheet table for given material type.
 
-        Args:
+        Args
+        -----
             :mtype: -- Material type
-
-        Return:
-            DataFrame
         """
         table_data = self.bom_df[self.bom_df.childtype == mtype].filter(
             ["application", "child", "childname", "childqty", "childrate", "rate"]
