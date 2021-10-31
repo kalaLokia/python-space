@@ -23,7 +23,7 @@ For eg: within directory __costanalysis__
 Linux:
 ```
 >>> python -m venv env
->>> env/bin/actiavte
+>>> source env/bin/actiavte
 >>> pip install -r requirements.txt
 ```
 Windows:
